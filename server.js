@@ -14,6 +14,9 @@ const proxyOptions = {
 const backendUrl = (process.env.BACKEND_URL || 'https://fit-web-six.vercel.app').replace(/\/$/, '');
 const frontendUrl = (process.env.FRONTEND_URL || 'https://persona-plus-onboard.vercel.app').replace(/\/$/, '');
 
+// 配置：是否保留 /admin 前缀（通过环境变量控制，默认为 false，即移除前缀）
+const keepAdminPrefix = process.env.KEEP_ADMIN_PREFIX === 'true';
+
 // 创建后台代理中间件（用于静态资源）
 const backendProxy = createProxyMiddleware({
   target: backendUrl,
@@ -39,20 +42,32 @@ app.use((req, res, next) => {
 });
 
 // 将 /admin 路径的请求转发到后台项目（包括所有子路径）
-app.use('/admin', createProxyMiddleware({
+const adminProxyConfig = {
   target: backendUrl,
   ...proxyOptions,
-  pathRewrite: {
-    '^/admin': '' // 移除 /admin 前缀
-  },
   onError: (err, req, res) => {
     console.error('Backend proxy error:', err.message);
-    res.status(500).json({ error: 'Proxy error', message: err.message });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Proxy error', message: err.message });
+    }
   },
   onProxyReq: (proxyReq, req, res) => {
-    console.log(`[Backend] Proxying ${req.method} ${req.url} to ${backendUrl}`);
+    const targetPath = keepAdminPrefix ? req.url : req.url.replace(/^\/admin/, '') || '/';
+    console.log(`[Backend] Proxying ${req.method} ${req.url} to ${backendUrl}${targetPath}${keepAdminPrefix ? ' (keeping /admin prefix)' : ' (removing /admin prefix)'}`);
+  },
+  onProxyRes: (proxyRes, req, res) => {
+    console.log(`[Backend] Response ${proxyRes.statusCode} for ${req.url}`);
   }
-}));
+};
+
+// 如果不需要保留前缀，则添加路径重写
+if (!keepAdminPrefix) {
+  adminProxyConfig.pathRewrite = {
+    '^/admin': '' // 移除 /admin 前缀
+  };
+}
+
+app.use('/admin', createProxyMiddleware(adminProxyConfig));
 
 // 将其他路径转发到前台项目
 app.use('/', createProxyMiddleware({
@@ -60,10 +75,12 @@ app.use('/', createProxyMiddleware({
   ...proxyOptions,
   onError: (err, req, res) => {
     console.error('Frontend proxy error:', err.message);
-    res.status(500).json({ error: 'Proxy error', message: err.message });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Proxy error', message: err.message });
+    }
   },
   onProxyReq: (proxyReq, req, res) => {
-    console.log(`[Frontend] Proxying ${req.method} ${req.url} to ${frontendUrl}`);
+    console.log(`[Frontend] Proxying ${req.method} ${req.url} to ${frontendUrl}${req.url}`);
   }
 }));
 
@@ -83,6 +100,5 @@ if (require.main === module) {
 }
 
 // 导出 app 供 Vercel 使用
-// Vercel serverless 函数需要导出 app
 module.exports = app;
 
