@@ -19,6 +19,7 @@ app.use('/admin', createProxyMiddleware({
   }
 }));
 
+
 // 将其他路径转发到前台项目
 app.use('/', createProxyMiddleware({
   target: process.env.FRONTEND_URL || 'https://persona-plus-onboard.vercel.app/',
