@@ -10,19 +10,45 @@ const proxyOptions = {
   logLevel: 'debug'
 };
 
-// 将 /admin 路径的请求转发到后台项目
+const backendUrl = process.env.BACKEND_URL || 'https://fit-web-six.vercel.app/';
+const frontendUrl = process.env.FRONTEND_URL || 'https://persona-plus-onboard.vercel.app/';
+
+// 创建后台代理中间件（用于静态资源）
+const backendProxy = createProxyMiddleware({
+  target: backendUrl,
+  ...proxyOptions
+});
+
+// 中间件：检查静态资源请求是否来自 /admin 页面
+app.use((req, res, next) => {
+  const referer = req.get('referer') || '';
+  const pathname = req.path;
+  
+  // 如果请求来自 /admin 页面，且是静态资源（assets, static 等），也代理到后台
+  if (referer.includes('/admin') && (
+    pathname.startsWith('/assets/') ||
+    pathname.startsWith('/static/') ||
+    pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/i)
+  )) {
+    // 代理到后台项目
+    return backendProxy(req, res, next);
+  }
+  
+  next();
+});
+
+// 将 /admin 路径的请求转发到后台项目（包括所有子路径）
 app.use('/admin', createProxyMiddleware({
-  target: process.env.BACKEND_URL || 'https://fit-web-six.vercel.app/',
+  target: backendUrl,
   ...proxyOptions,
   pathRewrite: {
-    '^/admin': '' // 可选：移除 /admin 前缀
+    '^/admin': '' // 移除 /admin 前缀
   }
 }));
 
-
 // 将其他路径转发到前台项目
 app.use('/', createProxyMiddleware({
-  target: process.env.FRONTEND_URL || 'https://persona-plus-onboard.vercel.app/',
+  target: frontendUrl,
   ...proxyOptions
 }));
 
