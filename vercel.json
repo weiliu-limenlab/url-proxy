@@ -11,10 +11,6 @@
       "src": "/(.*)",
       "dest": "server.js"
     }
-  ],
-  "env": {
-    "BACKEND_URL": "@backend_url",
-    "FRONTEND_URL": "@frontend_url"
-  }
+  ]
 }
 
