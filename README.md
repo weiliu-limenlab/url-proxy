@@ -20,7 +20,6 @@ npm install
 ```
 BACKEND_URL=https://your-backend-project.vercel.app
 FRONTEND_URL=https://your-frontend-project.vercel.app
-KEEP_ADMIN_PREFIX=false  # 是否保留 /admin 前缀，默认为 false
 ```
 
 3. 启动服务器：
@@ -39,7 +38,6 @@ npm start
 3. 配置环境变量：
    - `BACKEND_URL`: 后台项目的 URL
    - `FRONTEND_URL`: 前台项目的 URL
-   - `KEEP_ADMIN_PREFIX`: 是否保留 `/admin` 前缀（可选，默认为 `false`）
 
 4. 部署
 
@@ -49,35 +47,11 @@ npm start
 
 - `BACKEND_URL`: 后台项目的完整 URL（默认: `https://your-backend-project.vercel.app`）
 - `FRONTEND_URL`: 前台项目的完整 URL（默认: `https://your-frontend-project.vercel.app`）
-- `KEEP_ADMIN_PREFIX`: 是否保留 `/admin` 前缀（可选，默认为 `false`）
-  - `false`（默认）: 访问 `/admin` 时，会转发到后台项目的 `/` 路径
-  - `true`: 访问 `/admin` 时，会转发到后台项目的 `/admin` 路径
 - `PORT`: 服务器端口（Vercel 会自动设置）
 
 ### 路径重写
 
-默认情况下，`/admin` 路径会被转发到后台项目，并且会移除 `/admin` 前缀（转发到后台的 `/` 路径）。
-
-如果你的后台项目需要保留 `/admin` 前缀，可以设置环境变量 `KEEP_ADMIN_PREFIX=true`。
-
-### 后台项目配置
-
-**重要：** 后台项目可能需要做一些配置调整才能正常工作。请查看 [后台项目配置指南](./BACKEND_CONFIG.md) 了解详细信息。
-
-主要配置点：
-- 路由配置（React Router basename、Next.js basePath 等）
-- 静态资源路径配置
-- API 请求路径配置
-- CORS 配置（如果需要）
-
-### 故障排除
-
-如果访问 `/admin` 时返回 404 错误，但静态资源（CSS、JS）能正常加载：
-
-1. **检查后台项目配置**: 查看 [后台项目配置指南](./BACKEND_CONFIG.md)
-2. **检查后台项目路由**: 确认后台项目是否有对应的路由处理请求
-3. **尝试保留前缀**: 设置 `KEEP_ADMIN_PREFIX=true`，看看是否解决问题
-4. **查看日志**: 在 Vercel 的部署日志中查看代理请求的详细信息
+默认情况下，`/admin` 路径会被转发到后台项目。如果你需要保留 `/admin` 前缀，可以修改 `server.js` 中的 `pathRewrite` 配置。
 
 ## 健康检查
 
