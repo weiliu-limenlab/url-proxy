@@ -14,9 +14,6 @@ const proxyOptions = {
 app.use('/admin', createProxyMiddleware({
   target: process.env.BACKEND_URL || 'https://fit-web-six.vercel.app/',
   ...proxyOptions,
-  pathRewrite: {
-    '^/admin': '' // 可选：移除 /admin 前缀
-  }
 }));
 
 
